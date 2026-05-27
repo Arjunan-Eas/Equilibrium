@@ -27,12 +27,22 @@ extern "C" {
 /* Includes ------------------------------------------------------------------*/
 #include "stm32l4xx_hal.h"
 #include <stdint.h>
+#include <stdio.h>
 #include "motor.h"
 #include "delay.h"
+#include "mpu.h"
+#include "uart.h"
+#include "pin_init.h"
+#include "led.h"
 
 /* Exported functions prototypes ---------------------------------------------*/
 void Error_Handler(void);
 void SystemClock_Config(void);
+void pid_control(int32_t *err, int16_t *speed);
+
+// Defines
+#define LOOP_LENGTH 	(7300)	// Defines the loop length in microseconds
+
 
 #ifdef __cplusplus
 }
