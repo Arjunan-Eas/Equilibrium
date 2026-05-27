@@ -1,9 +1,9 @@
 /* USER CODE BEGIN Header */
 /*******************************************************************************
-* 
+*
 *******************************************************************************
 * @file : MPU.c
-* @brief : 
+* @brief :
 * project : EE 329 S'26 CP
 * authors : Cody Carmichael (czc) - czcarmi@calpoly.edu
 * version : 0.1
@@ -17,7 +17,7 @@
 *
 *******************************************************************************
 * WIRING (pinout NUCLEO-L4A6ZG = L496ZG)
-* 
+*
 *******************************************************************************
 * REVISION HISTORY
 * 0.1 May 25, 2026 czc created
@@ -53,6 +53,10 @@ static int16_t gz_buf[MPU9250_AVG_LEN] = {0};
 
 static uint8_t avg_idx = 0;
 
+// -----------------------------------------------------------------------------
+// angle static variable: Assumes robot starts in upright orientation
+// -----------------------------------------------------------------------------
+static int32_t stored_angle = 0;
 
 // -----------------------------------------------------------------------------
 // function : MPU9250_init
@@ -229,8 +233,6 @@ void MPU9250_read_sensor(MPU9250_Data_t *data) {
 	data->ay = (int16_t)((raw[2]  << 8) | raw[3]);
 	data->az = (int16_t)((raw[4]  << 8) | raw[5]);
 
-	data->temp = (int16_t)((raw[6] << 8) | raw[7]);
-
 	data->gx = (int16_t)((raw[8]  << 8) | raw[9]);
 	data->gy = (int16_t)((raw[10] << 8) | raw[11]);
 	data->gz = (int16_t)((raw[12] << 8) | raw[13]);
@@ -336,6 +338,35 @@ void MPU9250_moving_average(MPU9250_Data_t *data) {
 	if (avg_idx >= MPU9250_AVG_LEN) {
 		avg_idx = 0;
 	}
+}
+
+/* -----------------------------------------------------------------------------
+ * function : MPU9250_get_angle( )
+ * INs      : sensor data struct, and loop duration
+ * OUTs     : angle of robot, as a double
+ * action   : Initializes LPUART1 on the Nucleo board
+ * authors  : EE 329 Lab Manual
+ * 			  Arjunan Easwarachandran (ace)
+ * version  : 1
+ * date     : 260502
+ * -------------------------------------------------------------------------- */
+int32_t MPU9250_get_angle(MPU9250_Data_t *data, int32_t dt) {
+	// Calculate angle with accelerometer
+    int32_t acc_angle = (int32_t)(
+        atan2f((float)data->ax, (float)data->az) * (180000.0f / PI)
+    );
+
+    // Calculate angle with gyroscope
+    int32_t gyro_delta = (int32_t)(
+        ((int64_t)data->gy * dt * 250) / (32767 * 1000)
+    );
+
+    int32_t gyro_angle = stored_angle + gyro_delta;
+
+    // Apply complementary filter
+    stored_angle = gyro_angle + (((acc_angle - gyro_angle) * ALPHA) >> 7);
+
+    return stored_angle;
 }
 
 
