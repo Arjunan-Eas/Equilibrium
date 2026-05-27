@@ -1,11 +1,12 @@
 /* USER CODE BEGIN Header */
 /*******************************************************************************
-* 
+*
 *******************************************************************************
 * @file : MPU.h
-* @brief : 
+* @brief :
 * project : EE 329 S'26 CP
 * authors : Cody Carmichael (czc) - czcarmi@calpoly.edu
+* 				Arjunan Easwarachandran (ace) - aeaswara@calpoly.edu
 * version : 0.1
 * date : May 25, 2026
 * compiler : STM32CubeIDE v.1.12.0 Build: 14980_20230301_1550 (UTC)
@@ -17,7 +18,7 @@
 *
 *******************************************************************************
 * WIRING (pinout NUCLEO-L4A6ZG = L496ZG)
-* 
+*
 *******************************************************************************
 * REVISION HISTORY
 * 0.1 May 25, 2026 czc created
@@ -31,6 +32,7 @@
 #define INC_MPU_H_
 
 #include "pin_init.h"
+#include <math.h>
 
 // -----------------------------------------------------------------------------
 // MPU9250 definitions
@@ -45,6 +47,12 @@
 #define MPU9250_CAL_SAMPLES      200
 #define MPU9250_AVG_LEN          5
 
+#define PI								(3.141593)
+#define ALPHA							(64)		// Weight of accelerometer out of 128
+#define RAD_TO_MDEG 					(180000.0 / PI)
+#define GYRO_SCALE_NUM 				(250)
+#define GYRO_SCALE_DEN 				(32767)
+
 
 // -----------------------------------------------------------------------------
 // MPU9250 data structure
@@ -55,8 +63,6 @@ typedef struct {
 	int16_t ax;
 	int16_t ay;
 	int16_t az;
-
-	int16_t temp;
 
 	int16_t gx;
 	int16_t gy;
@@ -83,5 +89,6 @@ void MPU9250_calibrate(void);
 
 void MPU9250_moving_average(MPU9250_Data_t *data);
 
+int32_t MPU9250_get_angle(MPU9250_Data_t *data, int32_t dt);
 
 #endif /* INC_MPU_H_ */
