@@ -48,7 +48,7 @@
 #define MPU9250_AVG_LEN          5
 
 #define PI								(3.141593)
-#define ALPHA							(64)		// Weight of accelerometer out of 128
+#define ALPHA							(100)		// Weight of accelerometer out of 128
 #define RAD_TO_MDEG 					(180000.0 / PI)
 #define GYRO_SCALE_NUM 				(250)
 #define GYRO_SCALE_DEN 				(32767)
@@ -77,11 +77,11 @@ typedef struct {
 
 void MPU9250_init(void);
 
-uint8_t MPU9250_read(uint8_t reg);
+//uint8_t MPU9250_read(uint8_t reg);
 
-void MPU9250_write(uint8_t reg, uint8_t data);
+uint8_t MPU9250_write(uint8_t reg, uint8_t data);
 
-void MPU9250_read_bytes(uint8_t reg, uint8_t *data, uint8_t len);
+uint8_t MPU9250_read_bytes(uint8_t reg, uint8_t *data, uint8_t len);
 
 void MPU9250_read_sensor(MPU9250_Data_t *data);
 
@@ -90,5 +90,7 @@ void MPU9250_calibrate(void);
 void MPU9250_moving_average(MPU9250_Data_t *data);
 
 int32_t MPU9250_get_angle(MPU9250_Data_t *data, int32_t dt);
+
+uint8_t MPU9250_verify_flag(uint32_t flag);
 
 #endif /* INC_MPU_H_ */
