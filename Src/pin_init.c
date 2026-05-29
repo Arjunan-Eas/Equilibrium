@@ -1,9 +1,9 @@
 /* USER CODE BEGIN Header */
 /*******************************************************************************
-* 
+*
 *******************************************************************************
 * @file : pin_init.c
-* @brief : 
+* @brief :
 * project : EE 329 S'26 A4
 * authors : Cody Carmichael (czc) - czcarmi@calpoly.edu
 * version : 0.1
@@ -17,7 +17,7 @@
 *
 *******************************************************************************
 * WIRING (pinout NUCLEO-L4A6ZG = L496ZG)
-* 
+*
 *******************************************************************************
 * REVISION HISTORY
 * 0.1 Apr 24, 2026 czc created
@@ -76,4 +76,3 @@ void GPIO_init (GPIO_TypeDef *port, uint8_t pin) {
    // default low
    port->BRR = (1U << pin);
 }
-
