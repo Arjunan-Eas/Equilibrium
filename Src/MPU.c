@@ -59,6 +59,11 @@ static uint8_t avg_idx = 0;
 static int32_t stored_angle = 0;
 
 // -----------------------------------------------------------------------------
+// Flag that indicates success (1) or failure (0) of an I2C operation
+// -----------------------------------------------------------------------------
+static uint8_t i2c_op_outcome_flag;
+
+// -----------------------------------------------------------------------------
 // function : MPU9250_init
 // -----------------------------------------------------------------------------
 
@@ -89,7 +94,12 @@ void MPU9250_init(void) {
 
 	I2C2->CR1 |= I2C_CR1_PE;
 
-	MPU9250_write(MPU9250_PWR_MGMT_1, 0x00);
+	i2c_op_outcome_flag = MPU9250_write(MPU9250_PWR_MGMT_1, 0x00);
+
+	// Try again if operation doesn't work
+	if(i2c_op_outcome_flag == ERROR) {
+		MPU9250_init();
+	}
 }
 
 
@@ -97,55 +107,55 @@ void MPU9250_init(void) {
 // function : MPU9250_read
 // -----------------------------------------------------------------------------
 
-uint8_t MPU9250_read(uint8_t reg) {
-
-	uint8_t data;
-
-	I2C2->CR2 &= ~(I2C_CR2_RD_WRN);
-	I2C2->CR2 &= ~(I2C_CR2_NBYTES);
-	I2C2->CR2 |=  (1 << I2C_CR2_NBYTES_Pos);
-
-	I2C2->CR2 &= ~(I2C_CR2_SADD);
-	I2C2->CR2 |=  (MPU9250_ADDRESS << (I2C_CR2_SADD_Pos + 1));
-
-	I2C2->CR2 |= I2C_CR2_START;
-
-	while (!(I2C2->ISR & I2C_ISR_TXIS));
-
-	I2C2->TXDR = reg;
-
-	while (!(I2C2->ISR & I2C_ISR_STOPF));
-
-	I2C2->ICR = I2C_ICR_STOPCF;
-
-
-	I2C2->CR2 |= I2C_CR2_RD_WRN;
-
-	I2C2->CR2 &= ~(I2C_CR2_NBYTES);
-	I2C2->CR2 |=  (1 << I2C_CR2_NBYTES_Pos);
-
-	I2C2->CR2 &= ~(I2C_CR2_SADD);
-	I2C2->CR2 |=  (MPU9250_ADDRESS << (I2C_CR2_SADD_Pos + 1));
-
-	I2C2->CR2 |= I2C_CR2_START;
-
-	while (!(I2C2->ISR & I2C_ISR_RXNE));
-
-	data = I2C2->RXDR & 0xFF;
-
-	while (!(I2C2->ISR & I2C_ISR_STOPF));
-
-	I2C2->ICR = I2C_ICR_STOPCF;
-
-	return data;
-}
+//uint8_t MPU9250_read(uint8_t reg) {
+//
+//	uint8_t data;
+//
+//	I2C2->CR2 &= ~(I2C_CR2_RD_WRN);
+//	I2C2->CR2 &= ~(I2C_CR2_NBYTES);
+//	I2C2->CR2 |=  (1 << I2C_CR2_NBYTES_Pos);
+//
+//	I2C2->CR2 &= ~(I2C_CR2_SADD);
+//	I2C2->CR2 |=  (MPU9250_ADDRESS << (I2C_CR2_SADD_Pos + 1));
+//
+//	I2C2->CR2 |= I2C_CR2_START;
+//
+//	while (!(I2C2->ISR & I2C_ISR_TXIS));
+//
+//	I2C2->TXDR = reg;
+//
+//	while (!(I2C2->ISR & I2C_ISR_STOPF));
+//
+//	I2C2->ICR = I2C_ICR_STOPCF;
+//
+//
+//	I2C2->CR2 |= I2C_CR2_RD_WRN;
+//
+//	I2C2->CR2 &= ~(I2C_CR2_NBYTES);
+//	I2C2->CR2 |=  (1 << I2C_CR2_NBYTES_Pos);
+//
+//	I2C2->CR2 &= ~(I2C_CR2_SADD);
+//	I2C2->CR2 |=  (MPU9250_ADDRESS << (I2C_CR2_SADD_Pos + 1));
+//
+//	I2C2->CR2 |= I2C_CR2_START;
+//
+//	while (!(I2C2->ISR & I2C_ISR_RXNE));
+//
+//	data = I2C2->RXDR & 0xFF;
+//
+//	while (!(I2C2->ISR & I2C_ISR_STOPF));
+//
+//	I2C2->ICR = I2C_ICR_STOPCF;
+//
+//	return data;
+//}
 
 
 // -----------------------------------------------------------------------------
 // function : MPU9250_write
 // -----------------------------------------------------------------------------
 
-void MPU9250_write(uint8_t reg, uint8_t data) {
+uint8_t MPU9250_write(uint8_t reg, uint8_t data) {
 
 	I2C2->CR2 &= ~(I2C_CR2_RD_WRN);
 
@@ -157,17 +167,25 @@ void MPU9250_write(uint8_t reg, uint8_t data) {
 
 	I2C2->CR2 |= I2C_CR2_START;
 
-	while (!(I2C2->ISR & I2C_ISR_TXIS));
+	if(MPU9250_verify_flag(I2C_ISR_TXIS)) {
+		return ERROR;
+	}
 
 	I2C2->TXDR = reg;
 
-	while (!(I2C2->ISR & I2C_ISR_TXIS));
+	if(MPU9250_verify_flag(I2C_ISR_TXIS)) {
+		return ERROR;
+	}
 
 	I2C2->TXDR = data;
 
-	while (!(I2C2->ISR & I2C_ISR_STOPF));
+	if(MPU9250_verify_flag(I2C_ISR_STOPF)) {
+		return ERROR;
+	}
 
 	I2C2->ICR = I2C_ICR_STOPCF;
+
+	return SUCCESS;
 }
 
 
@@ -175,7 +193,7 @@ void MPU9250_write(uint8_t reg, uint8_t data) {
 // function : MPU9250_read_bytes
 // -----------------------------------------------------------------------------
 
-void MPU9250_read_bytes(uint8_t reg, uint8_t *data, uint8_t len) {
+uint8_t MPU9250_read_bytes(uint8_t reg, uint8_t *data, uint8_t len) {
 
 	I2C2->CR2 &= ~(I2C_CR2_RD_WRN);
 
@@ -187,11 +205,15 @@ void MPU9250_read_bytes(uint8_t reg, uint8_t *data, uint8_t len) {
 
 	I2C2->CR2 |= I2C_CR2_START;
 
-	while (!(I2C2->ISR & I2C_ISR_TXIS));
+	if(MPU9250_verify_flag(I2C_ISR_TXIS)) {
+		return ERROR;
+	}
 
 	I2C2->TXDR = reg;
 
-	while (!(I2C2->ISR & I2C_ISR_STOPF));
+	if(MPU9250_verify_flag(I2C_ISR_STOPF)) {
+		return ERROR;
+	}
 
 	I2C2->ICR = I2C_ICR_STOPCF;
 
@@ -208,14 +230,20 @@ void MPU9250_read_bytes(uint8_t reg, uint8_t *data, uint8_t len) {
 
 	for (uint8_t i = 0; i < len; i++) {
 
-		while (!(I2C2->ISR & I2C_ISR_RXNE));
+		if(MPU9250_verify_flag(I2C_ISR_RXNE)) {
+			return ERROR;
+		}
 
 		data[i] = I2C2->RXDR & 0xFF;
 	}
 
-	while (!(I2C2->ISR & I2C_ISR_STOPF));
+	if(MPU9250_verify_flag(I2C_ISR_STOPF)) {
+		return ERROR;
+	}
 
 	I2C2->ICR = I2C_ICR_STOPCF;
+
+	return SUCCESS;
 }
 
 
@@ -227,7 +255,12 @@ void MPU9250_read_sensor(MPU9250_Data_t *data) {
 
 	uint8_t raw[14];
 
-	MPU9250_read_bytes(MPU9250_ACCEL_XOUT_H, raw, 14);
+	i2c_op_outcome_flag = MPU9250_read_bytes(MPU9250_ACCEL_XOUT_H, raw, 14);
+
+	// Try again if operation doesn't work
+	if(i2c_op_outcome_flag == ERROR) {
+		MPU9250_read_sensor(data);
+	}
 
 	data->ax = (int16_t)((raw[0]  << 8) | raw[1]);
 	data->ay = (int16_t)((raw[2]  << 8) | raw[3]);
@@ -343,7 +376,7 @@ void MPU9250_moving_average(MPU9250_Data_t *data) {
 /* -----------------------------------------------------------------------------
  * function : MPU9250_get_angle( )
  * INs      : sensor data struct, and loop duration
- * OUTs     : angle of robot, as a double
+ * OUTs     : angle of robot, as an int32_t in millidegrees
  * action   : Initializes LPUART1 on the Nucleo board
  * authors  : EE 329 Lab Manual
  * 			  Arjunan Easwarachandran (ace)
@@ -369,4 +402,23 @@ int32_t MPU9250_get_angle(MPU9250_Data_t *data, int32_t dt) {
     return stored_angle;
 }
 
-
+/* -----------------------------------------------------------------------------
+ * function : MPU9250_verify_flag( uint32_t flag )
+ * INs      : I2C status flag to check
+ * OUTs     : uint8_t status
+ * action   : Provides a timeout for I2C operations by checking the status
+ * 			  register and timing out after 100000 cycles
+ * authors  : ChatGPT
+ * 			  Arjunan Easwarachandran (ace)
+ * version  : 1
+ * date     : 260529
+ * -------------------------------------------------------------------------- */
+uint8_t MPU9250_verify_flag(uint32_t flag) {
+	uint32_t timeout = 100000;
+	while (!(I2C2->ISR & flag)) {
+	    if (--timeout == 0) {
+	        return ERROR;
+	    }
+	}
+	return SUCCESS;
+}
