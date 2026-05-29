@@ -14,15 +14,16 @@
  *******************************************************************************
  * REVISION HISTORY
  * 1 260516 (ace) created file
+ * 2 260529 (ace)	completed integration of bluetooth communication
  ******************************************************************************/
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 
 // PID coefficients
-static int32_t kp = 150;
-static int32_t ki = 0;
-static int32_t kd = 0;
+static const int32_t kp = 120;		// 120
+static const int32_t ki = 80;	// 180
+static const int32_t kd = 1500; 	// 1800
 
 // Accumulator for integral error
 static int64_t integral_err = 0;
@@ -34,26 +35,17 @@ int main(void) {
 	SysTick_Init();
 	Motor_init();
 	MPU9250_init();
-	LPUART_init();
+	usart2_rx_init();
 	USER_LED_init();
 
 	// Struct to hold IMU data and UART messages
 	MPU9250_Data_t imu;
-	char msg[128];
-
-	// Initialize test pin
-	GPIO_init(GPIOA, 2);
-	GPIOA->MODER |= GPIO_MODER_MODE2_0;	// Output mode
 
 	// Calibrate the IMU
-	LPUART_ESC_print("[H");
-	LPUART_print("Keep MPU flat and still...\r\n");
-	delay_us(1000000);
-
+	USER_LED_write(1);	// Turn on calibration LED
 	MPU9250_calibrate();
+	USER_LED_write(0);	// Turn on calibration LED
 
-	LPUART_print("Calibration done\r\n");
-	delay_us(500000);
 
 	// err_angle[0] = prev angle, err_angle[1] = current angle
 	int32_t err_angle[2] = {0, 0};
@@ -74,12 +66,27 @@ int main(void) {
 	// Initial reference angle
 	int32_t reference_angle = 0;
 
-	// Clear screen
-	LPUART_ESC_print("[2J");
-
-	USER_LED_write(1);	// Turn on calibration done LED
 	/* PID Control Loop */
 	while (1) {
+		delay_us(1500);
+
+		switch(command_flag) {
+			case 1 :
+				motor_speed[0] = 1000;
+				motor_speed[1] = 1000;
+				Motor_write(motor_speed);
+				continue;
+			case 2 :
+				motor_speed[0] = -1000;
+				motor_speed[1] = -1000;
+				Motor_write(motor_speed);
+				continue;
+			case 3 :
+				motor_speed[0] = 0;
+				motor_speed[1] = 0;
+				Motor_write(motor_speed);
+				continue;
+		}
 
 		// Read from IMU
 		MPU9250_read_sensor(&imu);
@@ -93,19 +100,10 @@ int main(void) {
 
 		// Run PID loop to get motor speed
 		pid_control(err_angle, motor_speed);
+//		lead_lag_control(err_angle, motor_speed);
 		Motor_write(motor_speed);
-
-		LPUART_ESC_print("[H");
-		sprintf(msg, "Angle [mdeg]: %.3f  \r\n", ((float)err_angle[1]) / 1000);
-		LPUART_print(msg);
-		sprintf(msg, "Control Effort: %d  \r\n", motor_speed[0]);
-		LPUART_print(msg);
-
-		delay_us(1000);
-
-		// Turn off pin
-		GPIOA->ODR ^= GPIO_PIN_2;
 	}
+
 }
 
 /* -----------------------------------------------------------------------------
@@ -122,11 +120,15 @@ void pid_control(int32_t *err, int16_t *speed) {
     int64_t derivative_err;
     int64_t output;
 
-    // mdeg/s, not mdeg/ms
+    // deg/s
     derivative_err = ((int64_t)(err[1] - err[0]) * 1000) / LOOP_LENGTH;
 
-    // deg*s
+    // udeg*s
     integral_err += ((int64_t)err[1] * LOOP_LENGTH) / 1000000;
+
+    // Saturate at +/- 1000
+    if (integral_err > 3*MOTOR_MAX) integral_err = 3*MOTOR_MAX;
+    if (integral_err < -3*MOTOR_MAX) integral_err = -3*MOTOR_MAX;
 
     output =
         ((int64_t)kp * err[1]) +
@@ -134,7 +136,7 @@ void pid_control(int32_t *err, int16_t *speed) {
         ((int64_t)kd * derivative_err);
 
     // Scale down for integer operations, and swap sign for motor direction
-    output /= -1000;
+    output /= -PID_SCALE;
 
     // Saturate at +/- 1000
     if (output > MOTOR_MAX) output = MOTOR_MAX;
@@ -143,6 +145,7 @@ void pid_control(int32_t *err, int16_t *speed) {
     speed[0] = (int16_t)output;
     speed[1] = (int16_t)output;
 }
+
 
 
 void SystemClock_Config(void)
