@@ -14,6 +14,7 @@
  *******************************************************************************
  * REVISION HISTORY
  * 1 260516 (ace) created file
+ * 2 260529 (ace)	completed integration of bluetooth communication
  ******************************************************************************/
 
 /* Define to prevent recursive inclusion -------------------------------------*/
@@ -31,7 +32,7 @@ extern "C" {
 #include "motor.h"
 #include "delay.h"
 #include "mpu.h"
-#include "uart.h"
+#include "usart.h"
 #include "pin_init.h"
 #include "led.h"
 
@@ -39,10 +40,12 @@ extern "C" {
 void Error_Handler(void);
 void SystemClock_Config(void);
 void pid_control(int32_t *err, int16_t *speed);
+void lead_lag_control(int32_t *err, int16_t *speed);
 
 // Defines
-#define LOOP_LENGTH 	(7300)	// Defines the loop length in microseconds
-
+#define LOOP_LENGTH 	(5500)	// Defines the loop length in microseconds
+#define LL_SCALE 		(1000)
+#define PID_SCALE 	(1000)
 
 #ifdef __cplusplus
 }
