@@ -1,7 +1,7 @@
 /*******************************************************************************
  * DELAY MODULE
  *******************************************************************************
- * @file           : delay.c
+ * @file           : delay.h
  * @brief          : uses SysTick timer to create controllable delays
  * project         : EE 329 S'26 Assignment 3
  * authors         : Arjunan Easwarachandran (ace) - aeaswara@calpoly.edu
