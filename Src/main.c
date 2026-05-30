@@ -21,9 +21,9 @@
 #include "main.h"
 
 // PID coefficients
-static const int32_t kp = 120;		// 120
-static const int32_t ki = 80;	// 180
-static const int32_t kd = 1500; 	// 1800
+static const int32_t kp = 180;		// 180
+static const int32_t ki = 200;		// 150
+static const int32_t kd = 800; 		// 400
 
 // Accumulator for integral error
 static int64_t integral_err = 0;
@@ -84,6 +84,36 @@ int main(void) {
 			case STOP:
 				motor_speed[0] = 0;
 				motor_speed[1] = 0;
+				Motor_write(motor_speed);
+				continue;
+			case TURN_CW:
+				motor_speed[0] = -1000;
+				motor_speed[1] = 1000;
+				Motor_write(motor_speed);
+				continue;
+			case TURN_CCW:
+				motor_speed[0] = 1000;
+				motor_speed[1] = -1000;
+				Motor_write(motor_speed);
+				continue;
+			case TURN_CW_SLOW:
+				motor_speed[0] = -800;
+				motor_speed[1] = 800;
+				Motor_write(motor_speed);
+				continue;
+			case TURN_CCW_SLOW:
+				motor_speed[0] = 800;
+				motor_speed[1] = -800;
+				Motor_write(motor_speed);
+				continue;
+			case FORWARD_SLOW:
+				motor_speed[0] = 800;
+				motor_speed[1] = 800;
+				Motor_write(motor_speed);
+				continue;
+			case BACKWARD_SLOW:
+				motor_speed[0] = -800;
+				motor_speed[1] = -800;
 				Motor_write(motor_speed);
 				continue;
 		}

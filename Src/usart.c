@@ -6,6 +6,7 @@
  * project         : EE 329 S'26 Custom Project
  * authors         : Calab Fernandez - cferna50@calpoly.edu
  * 						Arjunan Easwarachandran - aeaswara@calpoly.edu
+ * 						Cody Carmichael - czcarmic@calpoly.edu
  * version         : 1
  * date            : 260529
  * IDE	          : STM32CubeIDE v.1.19.0
@@ -66,7 +67,6 @@ void USART2_IRQHandler( void  ) {
 
    uint8_t charRecv;
    if (USART2->ISR & USART_ISR_RXNE) {
-   	USER_LED_write(1);
       charRecv = USART2->RDR;
 		switch(charRecv) {
 		case FORWARD :
@@ -75,11 +75,29 @@ void USART2_IRQHandler( void  ) {
 		case BACKWARD :
 			command_flag = BACKWARD;
 			break;
-		case BALANCE:
+		case BALANCE :
 			command_flag = BALANCE;
 			break;
-		case STOP:
+		case STOP :
 			command_flag = STOP;
+			break;
+		case TURN_CW :
+			command_flag = TURN_CW;
+			break;
+		case TURN_CCW :
+			command_flag = TURN_CCW;
+			break;
+		case TURN_CW_SLOW :
+			command_flag = TURN_CW_SLOW;
+			break;
+		case TURN_CCW_SLOW :
+			command_flag = TURN_CCW_SLOW;
+			break;
+		case FORWARD_SLOW :
+			command_flag = FORWARD_SLOW;
+			break;
+		case BACKWARD_SLOW :
+			command_flag = BACKWARD_SLOW;
 			break;
 		}
 	}

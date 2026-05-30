@@ -6,6 +6,7 @@
  * project         : EE 329 S'26 Custom Project
  * authors         : Calab Fernandez - cferna50@calpoly.edu
  * 						Arjunan Easwarachandran - aeaswara@calpoly.edu
+ * 						Cody Carmichael - czcarmic@calpoly.edu
  * version         : 1
  * date            : 260529
  * IDE	          : STM32CubeIDE v.1.19.0
@@ -33,8 +34,14 @@
 #define NULL_TERM		(0x00)	// \0
 #define FORWARD		(0x77)	// Move forward command 'w'
 #define BACKWARD		(0x73)	// Move backward command 's'
-#define BALANCE		(0x20)	// Move balance command [space]
-#define STOP			(0x70)	// Stop command 'p'
+#define BALANCE		(0x62)	// Move balance command ''
+#define STOP			(0x20)	// Stop command [space]
+#define TURN_CW		(0x64)	// turn clock wise command 'a'
+#define TURN_CCW		(0x61)	// turn clock wise command 'd'
+#define TURN_CW_SLOW	(0x44)	// turn clock wise command 'A'
+#define TURN_CCW_SLOW (0x41)	// turn clock wise command 'D'
+#define FORWARD_SLOW (0x57)	// Move forward command 'W'
+#define BACKWARD_SLOW (0x53)	// Move backward command 'S'
 
 extern uint8_t command_flag;
 
