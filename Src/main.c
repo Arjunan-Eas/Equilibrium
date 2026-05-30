@@ -1,7 +1,7 @@
 /*******************************************************************************
  * EE 329 CUSTOM PROJECT: EQUILIBRIUM
  *******************************************************************************
- * @file           : main.h
+ * @file           : main.c
  * @brief          : Communication and control algorithm for Project
  * 						Equilibrium, a two-wheeled balancing robot
  * project         : EE 329 S'26 Custom Project
