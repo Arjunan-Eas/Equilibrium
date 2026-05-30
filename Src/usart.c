@@ -70,16 +70,16 @@ void USART2_IRQHandler( void  ) {
       charRecv = USART2->RDR;
 		switch(charRecv) {
 		case FORWARD :
-			command_flag = 1;
+			command_flag = FORWARD;
 			break;
 		case BACKWARD :
-			command_flag = 2;
+			command_flag = BACKWARD;
 			break;
 		case BALANCE:
-			command_flag = 0;
+			command_flag = BALANCE;
 			break;
 		case STOP:
-			command_flag = 3;
+			command_flag = STOP;
 			break;
 		}
 	}

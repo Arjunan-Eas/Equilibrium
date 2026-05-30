@@ -71,17 +71,17 @@ int main(void) {
 		delay_us(1500);
 
 		switch(command_flag) {
-			case 1 :
+			case FORWARD:
 				motor_speed[0] = 1000;
 				motor_speed[1] = 1000;
 				Motor_write(motor_speed);
 				continue;
-			case 2 :
+			case BACKWARD:
 				motor_speed[0] = -1000;
 				motor_speed[1] = -1000;
 				Motor_write(motor_speed);
 				continue;
-			case 3 :
+			case STOP:
 				motor_speed[0] = 0;
 				motor_speed[1] = 0;
 				Motor_write(motor_speed);
